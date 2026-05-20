@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalEditor v1.7.2</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --header-bg: #333;
+            --editor-bg: #ffffff;
+            --text-color: #000000;
+            --border-color: #ddd;
+            --panel-bg: #ffffff;
+            --modal-bg: rgba(0,0,0,0.5);
+            --accent: #007bff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1e1e1e;
+            --header-bg: #000;
+            --editor-bg: #252526;
+            --text-color: #d4d4d4;
+            --border-color: #444;
+            --panel-bg: #1e1e1e;
+            --modal-bg: rgba(0,0,0,0.8);
+            --accent: #00a2ff;
+        }
+
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: var(--bg-color); color: var(--text-color); transition: background 0.3s; }
+        
+        header { 
+            background: var(--header-bg); 
+            color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            flex-wrap: wrap; gap: 10px; z-index: 10;
+        }
+
+        .controls { display: flex; gap: 10px; align-items: center; }
+        
+        .filename-container { 
+            display: flex; align-items: center; gap: 5px; 
+            background: #444; padding: 4px 8px; border-radius: 4px; 
+        }
+        
+        .filename-container input { 
+            background: transparent; border: none; color: white; border-bottom: 1px solid #666; outline: none; font-size: 14px; width: 120px; 
+        }
+
+        .extension-select { background: #555; color: white; border: none; border-radius: 3px; font-size: 13px; cursor: pointer; }
+
+        .stats { font-size: 12px; color: #aaa; margin-left: 10px; }
+        .version-link { cursor: pointer; text-decoration: underline; color: var(--accent); }
+
+        main { display: flex; flex: 1; overflow: hidden; background: var(--panel-bg); }
+        
+        textarea { 
+            flex: 1; padding: 20px; border: none; outline: none; font-size: 16px; overflow-y: auto; 
+            background: var(--editor-bg); color: var(--text-color);
+            border-right: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; resize: none; 
+        }
+
+        #preview-container { flex: 1; display: none; background: #525659; padding: 20px; overflow-y: auto; }
+        .active-preview #preview-container { display: flex; justify-content: center; }
+        #preview-frame { width: 100%; max-width: 850px; height: 100%; border: none; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.4); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--editor-bg); color: var(--text-color);
+            padding: 25px; border-radius: 8px; max-width: 600px; width: 90%;
+            max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; }
+        .close-modal { cursor: pointer; font-size: 24px; font-weight: bold; }
+
+        button { cursor: pointer; padding: 6px 12px; border-radius: 4px; border: none; background: #007bff; color: white; font-weight: bold; font-size: 13px; }
+        button:hover { background: #0056b3; }
+        .secondary { background: #6c757d; }
+        .doc-btn { background: #28a745; }
+        
+        .changelog-item { margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    </style>
+</head>
+<body data-theme="light">
+
+<div class="modal-overlay" id="docModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 style="margin:0">Editor Guide</h2>
+            <span class="close-modal" onclick="toggleDoc()">&times;</span>
+        </div>
+        <div class="guide-body">
+            <h3>🎬 Screenplay Mode (.fountain)</h3>
+            <ul>
+                <li><strong>Scene Headings:</strong> Start with <code>INT.</code> or <code>EXT.</code></li>
+                <li><strong>Characters:</strong> Name in <strong>ALL CAPS</strong> on its own line.</li>
+                <li><strong>Parentheticals:</strong> <code>(inside parentheses)</code> on its own line.</li>
+            </ul>
+            <h3>📝 Markdown (.md)</h3>
+            <p>Use <code>#</code> for Titles, <code>**</code> for Bold, and <code>-</code> for Lists.</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="newsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 style="margin:0">Version History</h2>
+            <span class="close-modal" onclick="toggleNews()">&times;</span>
+        </div>
+        <div id="changelogContainer">
+            <div class="changelog-item">
+                <span style="font-weight:bold; color:var(--accent)">v1.7.2</span>
+                <ul>
+                    <li><b>Dynamic Placeholders:</b> Editor text changes based on file type.</li>
+                    <li><b>Legacy Logs:</b> Restored all historical version notes.</li>
+                </ul>
+            </div>
+            <div class="changelog-item">
+                <span style="font-weight:bold; color:var(--accent)">v1.7.1</span>
+                <ul><li>Added Guide button and Screenplay/MD documentation.</li></ul>
+            </div>
+            <div class="changelog-item">
+                <span style="font-weight:bold; color:var(--accent)">v1.6</span>
+                <ul><li>Multi-format Previewing for MD, HTML, and JS.</li></ul>
+            </div>
+            <div class="changelog-item">
+                <span style="font-weight:bold; color:var(--accent)">v1.5</span>
+                <ul><li>Added Dark Mode and Word/Char count stats.</li></ul>
+            </div>
+            <div class="changelog-item">
+                <span style="font-weight:bold; color:var(--accent)">v1.4</span>
+                <ul><li>Dynamic extension dropdown and improved file saving.</li></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<header>
+    <div class="title">
+        <strong>LocalEditor</strong> <small class="version-link" onclick="toggleNews()">(v1.7.2)</small>
+        <span class="stats" id="stats">Words: 0 | Chars: 0</span>
+    </div>
+    <div class="controls">
+        <button class="doc-btn" onclick="toggleDoc()">📖 Guide</button>
+        <button class="theme-btn" onclick="toggleTheme()">◒ Theme</button>
+        <div class="filename-container">
+            <input type="text" id="fileNameInput" placeholder="my-work">
+            <select id="extensionInput" class="extension-select" onchange="handleTypeChange()">
+                <option value=".fountain">.fountain (Script)</option>
+                <option value=".md">.md</option>
+                <option value=".html">.html</option>
+                <option value=".js">.js</option>
+                <option value=".txt">.txt</option>
+            </select>
+        </div>
+        <input type="file" id="fileInput" hidden accept=".txt,.md,.html,.css,.js,.fountain">
+        <button class="secondary" onclick="document.getElementById('fileInput').click()">Open</button>
+        <button onclick="togglePreview()" id="viewBtn">Show Preview</button>
+        <button onclick="downloadFile()">Save</button>
+    </div>
+</header>
+
+<main id="editorContainer">
+    <textarea id="editor" placeholder="Start your script... (Type INT. or EXT. for a scene)"></textarea>
+    <div id="preview-container">
+        <iframe id="preview-frame"></iframe>
+    </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
+<script>
+    const editor = document.getElementById('editor');
+    const previewFrame = document.getElementById('preview-frame');
+    const container = document.getElementById('editorContainer');
+    const viewBtn = document.getElementById('viewBtn');
+    const fileNameInput = document.getElementById('fileNameInput');
+    const extensionInput = document.getElementById('extensionInput');
+    const stats = document.getElementById('stats');
+    const newsModal = document.getElementById('newsModal');
+    const docModal = document.getElementById('docModal');
+
+    const placeholders = {
+        ".fountain": "Start your script... (e.g., INT. COFFEE SHOP - DAY)",
+        ".md": "Start typing Markdown... (e.g., # This is a Heading)",
+        ".html": "Write HTML code here... (e.g., <h1>Hello World</h1>)",
+        ".js": "Write Javascript here... (e.g., console.log('Hello');)",
+        ".txt": "Start typing plain text..."
+    };
+
+    function toggleNews() { newsModal.style.display = (newsModal.style.display === 'flex') ? 'none' : 'flex'; }
+    function toggleDoc() { docModal.style.display = (docModal.style.display === 'flex') ? 'none' : 'flex'; }
+
+    function handleTypeChange() {
+        editor.placeholder = placeholders[extensionInput.value] || "Type here...";
+        if (container.classList.contains('active-preview')) updatePreview();
+    }
+
+    editor.addEventListener('input', () => {
+        updateStats();
+        localStorage.setItem('autosave', editor.value);
+        if (container.classList.contains('active-preview')) updatePreview();
+    });
+
+    function updateStats() {
+        const text = editor.value.trim();
+        stats.innerText = `Words: ${text ? text.split(/\s+/).length : 0} | Chars: ${text.length}`;
+    }
+
+    function parseFountain(text) {
+        const lines = text.split('\n');
+        let html = '';
+        lines.forEach((line, index) => {
+            const trimmed = line.trim();
+            const upper = trimmed.toUpperCase();
+            if (trimmed === "") html += '<div style="height:1em"></div>';
+            else if (trimmed.startsWith('INT.') || trimmed.startsWith('EXT.')) html += `<div style="font-weight:bold; margin-top:1.5em;">${trimmed}</div>`;
+            else if (trimmed === upper && trimmed.length > 1 && !trimmed.includes('.')) html += `<div style="width:50%; margin: 1.5em auto 0 35%;">${trimmed}</div>`;
+            else if (trimmed.startsWith('(') && trimmed.endsWith(')')) html += `<div style="width:40%; margin: 0 auto 0 25%; font-style:italic;">${trimmed}</div>`;
+            else if (lines[index-1] && lines[index-1].trim() === lines[index-1].trim().toUpperCase() && lines[index-1].trim() !== "") html += `<div style="width:70%; margin: 0 auto 0 15%;">${trimmed}</div>`;
+            else html += `<div style="margin-top:1em;">${trimmed}</div>`;
+        });
+        return html;
+    }
+
+    function updatePreview() {
+        const ext = extensionInput.value;
+        const content = editor.value;
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        let styles = `<style>body { font-family: "Courier New", Courier, monospace; padding: 1in; font-size: 12pt; background: #fff; color: #000; }</style>`;
+        if (ext === '.fountain') doc.write(`${styles}${parseFountain(content)}`);
+        else if (ext === '.md') doc.write(`<style>body{font-family: sans-serif; padding:40px;}</style>${marked.parse(content)}`);
+        else if (ext === '.html') doc.write(content);
+        else doc.write(`<pre style="padding: 20px;">${content}</pre>`);
+        doc.close();
+    }
+
+    function togglePreview() {
+        container.classList.toggle('active-preview');
+        viewBtn.innerText = container.classList.contains('active-preview') ? "Hide Preview" : "Show Preview";
+        if (container.classList.contains('active-preview')) updatePreview();
+    }
+
+    function toggleTheme() {
+        const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    function downloadFile() {
+        const a = document.createElement('a');
+        a.download = `${fileNameInput.value || 'file'}${extensionInput.value}`;
+        a.href = URL.createObjectURL(new Blob([editor.value], { type: 'text/plain' }));
+        a.click();
+    }
+
+    window.addEventListener('load', () => {
+        const saved = localStorage.getItem('autosave');
+        if (saved) { editor.value = saved; updateStats(); }
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
+        handleTypeChange();
+    });
+</script>
+</body>
+</html>
