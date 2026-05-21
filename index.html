@@ -11,6 +11,8 @@
 
 <title>LocalEditor v1.7.2</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
 :root{
     --bg-color:#f4f4f9;
@@ -55,8 +57,6 @@ body{
     overflow:hidden;
 }
 
-/* HEADER */
-
 header{
     background:var(--header-bg);
     color:white;
@@ -98,8 +98,6 @@ header{
     gap:8px;
 }
 
-/* BUTTONS */
-
 button,
 .extension-select,
 .filename-container input{
@@ -138,8 +136,6 @@ button:hover{
     background:#6f42c1;
 }
 
-/* FILENAME */
-
 .filename-container{
     display:flex;
     align-items:center;
@@ -163,14 +159,10 @@ button:hover{
     padding:0 10px;
 }
 
-/* STATS */
-
 .stats{
     font-size:12px;
     color:#bbb;
 }
-
-/* MAIN */
 
 main{
     flex:1;
@@ -179,8 +171,6 @@ main{
     background:var(--panel-bg);
     min-height:0;
 }
-
-/* EDITOR */
 
 textarea{
     flex:1;
@@ -211,8 +201,6 @@ textarea{
     overflow:auto;
 }
 
-/* PREVIEW */
-
 #preview-container{
     flex:1;
     display:none;
@@ -235,8 +223,6 @@ textarea{
     background:white;
     box-shadow:0 8px 30px rgba(0,0,0,0.35);
 }
-
-/* MODALS */
 
 .modal-overlay{
     position:fixed;
@@ -276,15 +262,11 @@ textarea{
     font-weight:bold;
 }
 
-/* GUIDE */
-
 .guide-body code{
     background:rgba(127,127,127,0.2);
     padding:2px 6px;
     border-radius:6px;
 }
-
-/* MOBILE */
 
 @media (max-width: 900px){
 
@@ -337,8 +319,6 @@ textarea{
         font-size:17px;
     }
 }
-
-/* VERY SMALL */
 
 @media (max-width: 520px){
 
@@ -404,40 +384,13 @@ textarea{
         </div>
 
         <div id="changelogContainer">
-
             <div class="changelog-item">
                 <span style="font-weight:bold;color:var(--accent)">v1.7.2</span>
-
                 <ul>
                     <li><b>Dynamic Placeholders:</b> Editor text changes based on file type.</li>
                     <li><b>Legacy Logs:</b> Restored all historical version notes.</li>
                 </ul>
             </div>
-
-            <div class="changelog-item">
-                <span style="font-weight:bold;color:var(--accent)">v1.7.1</span>
-
-                <ul>
-                    <li>Added Guide button and Screenplay/MD documentation.</li>
-                </ul>
-            </div>
-
-            <div class="changelog-item">
-                <span style="font-weight:bold;color:var(--accent)">v1.6</span>
-
-                <ul>
-                    <li>Multi-format Previewing for MD, HTML, and JS.</li>
-                </ul>
-            </div>
-
-            <div class="changelog-item">
-                <span style="font-weight:bold;color:var(--accent)">v1.5</span>
-
-                <ul>
-                    <li>Added Dark Mode and Word/Char count stats.</li>
-                </ul>
-            </div>
-
         </div>
     </div>
 </div>
@@ -604,7 +557,7 @@ function parseFountain(text){
 
     let html = '';
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
 
         const trimmed = line.trim();
         const upper = trimmed.toUpperCase();
@@ -645,22 +598,6 @@ function parseFountain(text){
             `;
         }
 
-        else if(
-            trimmed.startsWith('(')
-            && trimmed.endsWith(')')
-        ){
-
-            html += `
-                <div style="
-                    width:40%;
-                    margin:0 auto 0 25%;
-                    font-style:italic;
-                ">
-                    ${trimmed}
-                </div>
-            `;
-        }
-
         else{
 
             html += `
@@ -686,22 +623,37 @@ function updatePreview(){
     doc.open();
 
     let styles = `
-        <style>
-            body{
-                font-family:sans-serif;
-                padding:40px;
-                background:white;
-                color:black;
-                line-height:1.6;
-            }
+    <style>
+    body{
+        padding:40px;
+        background:white;
+        color:black;
+        line-height:1.6;
+        font-family:sans-serif;
+    }
 
-            pre{
-                white-space:pre-wrap;
-            }
-        </style>
+    pre{
+        white-space:pre-wrap;
+    }
+    </style>
     `;
 
     if(ext === '.fountain'){
+
+        styles = `
+        <style>
+        body{
+            font-family:"Courier Prime","Courier New",monospace;
+            padding:1in;
+            background:white;
+            color:black;
+            line-height:1.5;
+            font-size:12pt;
+            max-width:8.5in;
+            margin:auto;
+        }
+        </style>
+        `;
 
         doc.write(styles + parseFountain(content));
     }
